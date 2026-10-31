@@ -1,5 +1,5 @@
 # Order Management Dashboard
-## B.Tech CSE Mini Project
+## B.Tech CSE  Project
 
 A full-stack Order Management Dashboard built with HTML, CSS, JavaScript, Node.js, Express.js, and MongoDB.
 
