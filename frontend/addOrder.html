@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Order — Order Management</title>
+  <meta name="description" content="Create a new customer order" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-icon">📦</div>
+      <div>
+        <div class="brand-name">OrderDash</div>
+        <div class="brand-sub">Management System</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Main Menu</div>
+      <a href="/dashboard" class="nav-item">
+        <span class="nav-icon">🏠</span> Dashboard
+      </a>
+      <a href="/orders" class="nav-item">
+        <span class="nav-icon">📋</span> All Orders
+      </a>
+      <a href="/addOrder" class="nav-item active">
+        <span class="nav-icon">➕</span> Add Order
+      </a>
+
+      <div class="nav-section-title">Status</div>
+      <a href="/orders?status=Pending" class="nav-item">
+        <span class="nav-icon">⏳</span> Pending
+      </a>
+      <a href="/orders?status=Processing" class="nav-item">
+        <span class="nav-icon">⚙️</span> Processing
+      </a>
+      <a href="/orders?status=Delivered" class="nav-item">
+        <span class="nav-icon">✅</span> Delivered
+      </a>
+      <a href="/orders?status=Cancelled" class="nav-item">
+        <span class="nav-icon">❌</span> Cancelled
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="admin-info">
+        <div class="admin-avatar" id="adminAvatar">A</div>
+        <div>
+          <div class="admin-name" id="adminName">Admin</div>
+          <div class="admin-role">Administrator</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="logoutBtn">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN CONTENT ───────────────────────────────────────────── -->
+  <main class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2>Add New Order</h2>
+        <p>Fill in the details to create a new customer order</p>
+      </div>
+      <div class="topbar-right">
+        <a href="/orders" class="btn btn-secondary btn-sm">← Back to Orders</a>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <div class="form-card">
+
+        <div class="alert-error" id="formError" style="margin-bottom:20px;"></div>
+
+        <form id="addOrderForm" novalidate>
+          <div class="form-grid">
+
+            <div class="form-field">
+              <label for="customerName">Customer Name *</label>
+              <input
+                type="text"
+                id="customerName"
+                name="customerName"
+                placeholder="e.g. Rahul Sharma"
+                required
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="productName">Product Name *</label>
+              <input
+                type="text"
+                id="productName"
+                name="productName"
+                placeholder="e.g. Samsung Galaxy S24"
+                required
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="quantity">Quantity *</label>
+              <input
+                type="number"
+                id="quantity"
+                name="quantity"
+                placeholder="e.g. 2"
+                min="1"
+                required
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="price">Price (per unit ₹) *</label>
+              <input
+                type="number"
+                id="price"
+                name="price"
+                placeholder="e.g. 74999"
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+
+            <div class="form-field">
+              <label for="status">Order Status</label>
+              <select id="status" name="status">
+                <option value="Pending">Pending</option>
+                <option value="Processing">Processing</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="orderDate">Order Date</label>
+              <input
+                type="date"
+                id="orderDate"
+                name="orderDate"
+              />
+            </div>
+
+          </div><!-- /form-grid -->
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+              ➕ Create Order
+            </button>
+            <a href="/orders" class="btn btn-secondary">Cancel</a>
+          </div>
+        </form>
+
+      </div><!-- /form-card -->
+    </div>
+  </main>
+
+</div>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // ── AUTH GUARD ──────────────────────────────────────────────────────────────
+  const token = localStorage.getItem('token');
+  if (!token) { window.location.href = '/'; }
+
+  // ── SIDEBAR / TOPBAR INIT ───────────────────────────────────────────────────
+  const adminUser = localStorage.getItem('adminUser') || 'Admin';
+  document.getElementById('adminName').textContent = adminUser;
+  document.getElementById('adminAvatar').textContent = adminUser.charAt(0).toUpperCase();
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('adminUser');
+    window.location.href = '/';
+  });
+
+  // ── SET DEFAULT DATE ────────────────────────────────────────────────────────
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('orderDate').value = today;
+
+  // ── TOAST ───────────────────────────────────────────────────────────────────
+  function showToast(msg, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    toast.innerHTML = `<span>${icon}</span><span class="toast-msg">${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+  }
+
+  // ── FORM SUBMIT ─────────────────────────────────────────────────────────────
+  document.getElementById('addOrderForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formError = document.getElementById('formError');
+    formError.style.display = 'none';
+
+    const customerName = document.getElementById('customerName').value.trim();
+    const productName  = document.getElementById('productName').value.trim();
+    const quantity     = parseInt(document.getElementById('quantity').value);
+    const price        = parseFloat(document.getElementById('price').value);
+    const status       = document.getElementById('status').value;
+    const orderDate    = document.getElementById('orderDate').value;
+
+    if (!customerName || !productName || !quantity || !price) {
+      formError.textContent = 'Please fill in all required fields.';
+      formError.style.display = 'block';
+      return;
+    }
+
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating...';
+
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ customerName, productName, quantity, price, status, orderDate }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showToast('Order created successfully!', 'success');
+        setTimeout(() => { window.location.href = '/orders'; }, 1200);
+      } else {
+        formError.textContent = data.message || 'Failed to create order.';
+        formError.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = '➕ Create Order';
+      }
+    } catch (err) {
+      formError.textContent = 'Server error. Please try again.';
+      formError.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = '➕ Create Order';
+    }
+  });
+</script>
+
+</body>
+</html>
